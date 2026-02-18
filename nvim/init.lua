@@ -1,5 +1,5 @@
 -- ==========================================================================
--- 1. INSTALADOR DE PLUGINS (LAZY.NVIM)
+-- 1. PLUGIN INSTALLER (LAZY.NVIM)
 -- ==========================================================================
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -10,7 +10,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 -- ==========================================================================
--- 2. CONFIGURAÇÕES GERAIS DO EDITOR E CUSTOM KEYMAPS
+-- 2. GENERAL EDITOR SETTINGS AND CUSTOM KEYMAPS
 -- ==========================================================================
 vim.g.mapleader = " "
 vim.opt.termguicolors = true
@@ -22,43 +22,59 @@ vim.opt.cursorline = true
 vim.opt.conceallevel = 2 
 vim.opt.statusline = "%f%m\\ %=3l:%-2c\\ %y"
 
--- Ativa o corretor ortográfico para Português e Inglês
--- Ativa o corretor e define o idioma inicial como Português
+-- Enables spell checker and sets the initial language to Portuguese
 vim.opt.spell = true
 vim.opt.spelllang = "pt"
 
--- Atalho para alternar o dicionário (Modo Normal: Espaço + sl)
+-- Shortcut to toggle dictionary (Normal Mode: Space + sl)
 vim.keymap.set("n", "<leader>sl", function()
     if vim.o.spelllang == "pt" then
         vim.opt.spelllang = "en"
-        vim.notify("Dicionário: INGLÊS", vim.log.levels.INFO)
+        vim.notify("Dictionary: ENGLISH", vim.log.levels.INFO)
     else
         vim.opt.spelllang = "pt"
-        vim.notify("Dicionário: PORTUGUÊS", vim.log.levels.INFO)
+        vim.notify("Dictionary: PORTUGUESE", vim.log.levels.INFO)
     end
-end, { desc = "Alternar Dicionário (PT/EN)" })
+end, { desc = "Toggle Dictionary (PT/EN)" })
 
--- >> ATALHOS CUSTOMIZADOS (KEYMAPS) <<
+-- >> CUSTOM KEYMAPS <<
 local map = vim.keymap.set
 
--- Formatação Rápida Markdown (Modo Visual - Linha por Linha)
-map("v", "<leader>b", [[:g/\S/s/^\s*\zs.\{-}\ze\s*$/**&**/<CR>:noh<CR>]], { desc = "Format: Bold", silent = true })
-map("v", "<leader>i", [[:g/\S/s/^\s*\zs.\{-}\ze\s*$/*&*/<CR>:noh<CR>]], { desc = "Format: Italic", silent = true })
-map("v", "<leader>x", [[:g/\S/s/^\s*\zs.\{-}\ze\s*$/***&***/<CR>:noh<CR>]], { desc = "Format: Bold + Italic", silent = true })
-map("v", "<leader>s", [[:g/\S/s/^\s*\zs.\{-}\ze\s*$/~~&~~/<CR>:noh<CR>]], { desc = "Format: Strikethrough", silent = true })
+-- Smart Markdown Formatting Function:
+-- 1 line ('v' selection): Formats exactly the selected word/text.
+-- Multiple lines (or 'V' selection): Formats the beginning and end of each line, ignoring empty ones.
+local function smart_format(marker)
+    return function()
+        local num_lines = math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1
+        local current_mode = vim.fn.mode()
+        
+        if num_lines == 1 and current_mode == "v" then
+            -- Exact surgical replacement of the selected text
+            return "c" .. marker .. "<C-r>\"" .. marker .. "<ESC>"
+        else
+            -- Smart line-by-line RegEx (ignores empty lines and spaces)
+            return "<Esc>:'<,'>g/\\S/s/^\\s*\\zs.\\{-}\\ze\\s*$/" .. marker .. "&" .. marker .. "/<CR>:noh<CR>"
+        end
+    end
+end
 
--- Transformar linhas em Bullet List (Modo Visual - Ignora linhas vazias)
--- O '\s*\zs' garante que se a linha tiver indentação (espaços no começo), o bullet fica depois dos espaços!
-map("v", "<leader>bl", [[:g/\S/s/^\s*\zs/- /<CR>:noh<CR>]], { desc = "Format: Add Bullets", silent = true })
+-- Mappings using the Smart Function
+map("v", "<leader>b", smart_format("**"), { expr = true, desc = "Format: Bold" })
+map("v", "<leader>i", smart_format("*"), { expr = true, desc = "Format: Italic" })
+map("v", "<leader>x", smart_format("***"), { expr = true, desc = "Format: Bold + Italic" })
+map("v", "<leader>s", smart_format("~~"), { expr = true, desc = "Format: Strikethrough" })
 
--- Limpar TODAS as linhas em branco da seleção visual (Modo Visual)
-map("v", "<leader>nl", ":g/^\\s*$/d<CR>:noh<CR>", { desc = "Remove Todas Newlines", silent = true })
+-- Transform lines into Bullet List (Visual Mode - Ignores empty lines)
+map("v", "<leader>bl", "<Esc>:'<,'>g/\\S/s/^\\s*\\zs/- /<CR>:noh<CR>", { desc = "Format: Add Bullets", silent = true })
 
--- Correção Instantânea de Typos (Modo Inserção)
-map("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { desc = "Corrige última palavra errada" })
+-- Clear ALL empty lines from visual selection (Visual Mode)
+map("v", "<leader>nl", "<Esc>:'<,'>g/^\\s*$/d<CR>:noh<CR>", { desc = "Remove All Newlines", silent = true })
+
+-- Instant Typo Correction (Insert Mode)
+map("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { desc = "Correct last misspelled word" })
 
 -- ==========================================================================
--- 3. CONFIGURAÇÃO DO VIMTEX E ULTISNIPS
+-- 3. VIMTEX AND ULTISNIPS CONFIGURATION
 -- ==========================================================================
 vim.g.vimtex_view_method = 'general'
 vim.g.vimtex_view_general_viewer = 'zathura'
@@ -85,18 +101,18 @@ vim.g.UltiSnipsJumpBackwardTrigger = '<s-tab>'
 vim.g.UltiSnipsSnippetDirectories = { "UltiSnips" }
 
 -- ==========================================================================
--- 4. LISTA DE PLUGINS (LAZY)
+-- 4. PLUGIN LIST (LAZY)
 -- ==========================================================================
 require("lazy").setup({
 
-  -- >> CHEATSHEET DE ATALHOS (JANELA FLUTUANTE)
+  -- >> KEYMAP CHEATSHEET (FLOATING WINDOW)
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
     opts = { delay = 500 },
   },
 
-  -- >> AUTOCOMPLETAR E CORREÇÃO DE PALAVRAS (NOVO SETUP)
+  -- >> AUTOCOMPLETE AND WORD CORRECTION (NEW SETUP)
   {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
@@ -104,7 +120,7 @@ require("lazy").setup({
       "hrsh7th/cmp-buffer", 
       "hrsh7th/cmp-path",   
       "quangnguyen30192/cmp-nvim-ultisnips", 
-      "f3fora/cmp-spell", -- Plugin novo: sugere correção ortográfica no autocompletar
+      "f3fora/cmp-spell", -- New plugin: suggests spelling corrections in autocomplete
     },
     config = function()
       local cmp = require("cmp")
@@ -119,16 +135,16 @@ require("lazy").setup({
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
           ['<C-Space>'] = cmp.mapping.complete(),
           
-          -- Cancela/fecha o menu de sugestões rápido
+          -- Quickly cancels/closes the suggestions menu
           ['<C-c>'] = cmp.mapping.abort(), 
           
-          -- Só completa a palavra se você selecionou uma (evita completar coisas sem querer ao dar Enter)
+          -- Only completes the word if you selected one (prevents accidental completion on Enter)
           ['<CR>'] = cmp.mapping.confirm({ select = false }), 
         }),
         sources = cmp.config.sources({
-          -- Limita para apenas 4 sugestões de correção ortográfica
+          -- Limits to only 4 spelling correction suggestions
           { name = 'spell', max_item_count = 4 }, 
-          -- Deixa seus snippets e texto do arquivo como backup
+          -- Keeps your snippets and buffer text as backup
           { name = 'ultisnips', max_item_count = 2 },
           { name = 'buffer', max_item_count = 2 },
         })
@@ -136,7 +152,7 @@ require("lazy").setup({
     end
   },
 
-  -- >> TEMA: GRUVBOX MATERIAL
+  -- >> THEME: GRUVBOX MATERIAL
   { 
     "sainnhe/gruvbox-material", 
     lazy = false, 
@@ -186,7 +202,7 @@ require("lazy").setup({
     end
   },
   
-  -- >> LATEX E SNIPPETS
+  -- >> LATEX AND SNIPPETS
   { "lervag/vimtex", ft = "tex" },
   { "sirver/ultisnips" },
   { "honza/vim-snippets" },
@@ -235,7 +251,7 @@ require("lazy").setup({
     end
   },
 
-  -- >> OUTROS PLUGINS (FOLDING, OUTLINE, BULLETS, FORMATTER)
+  -- >> OTHER PLUGINS (FOLDING, OUTLINE, BULLETS, FORMATTER)
   {
     "kevinhwang91/nvim-ufo",
     dependencies = { "kevinhwang91/promise-async" },
