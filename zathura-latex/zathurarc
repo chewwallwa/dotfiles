@@ -1,0 +1,54 @@
+# IMPORTANTE: Troque 'seu_usuario' pelo seu nome real de usuário
+#include --config-dir=/home/thierry/.config/zathura-latex
+
+# --- ESTRUTURA VISUAL (MESA vs PAPEL) ---
+
+# Margem ao redor da folha (aumentei um pouco pra ver melhor o fundo)
+set page-padding 15
+
+# 1. A MESA (Fundo da Janela)
+# Fiz bem escuro e transparente. Isso cria o contraste com a folha.
+set default-bg "rgba(10, 10, 10, 0.65)"
+set default-fg "#ebdbb2"
+
+# 2. O PAPEL (Página do PDF)
+# Um pouco mais claro e menos transparente que a mesa.
+# Assim você vê o retângulo da folha flutuando no fundo escuro.
+set recolor-lightcolor "rgba(30, 30, 30, 0.85)"
+
+# 3. O TEXTO (Bege Gruvbox)
+set recolor-darkcolor "#ebdbb2"
+
+# Configs do motor de cores
+set recolor "true"
+set recolor-keephue "true"
+
+# --- INTERFACE (BARRAS) ---
+# Mesma cor do papel para parecer integrado
+set statusbar-bg "rgba(30, 30, 30, 0.85)"
+set statusbar-fg "#ebdbb2"
+
+set inputbar-bg "rgba(30, 30, 30, 0.85)"
+set inputbar-fg "#ebdbb2"
+
+# --- NOTIFICAÇÕES (DISCRETAS) ---
+set selection-notification "false"
+set render-loading "false"
+
+# Fundo escuro (invisível na mesa), texto bege
+set notification-bg "rgba(10, 10, 10, 0.8)"
+set notification-fg "#ebdbb2"
+
+# Erros (Texto Vermelho para você saber que deu erro, mas fundo discreto)
+set notification-error-bg "rgba(10, 10, 10, 0.8)"
+set notification-error-fg "#cc241d"
+set notification-warning-bg "rgba(10, 10, 10, 0.8)"
+set notification-warning-fg "#d79921"
+
+# --- HIGHLIGHT (MARCA-TEXTO) ---
+# Amarelo Gruvbox muito suave e transparente
+set highlight-color "rgba(215, 153, 33, 0.2)"
+set highlight-active-color "rgba(215, 153, 33, 0.4)"
+
+# --- ZOOM ---
+set zoom 120

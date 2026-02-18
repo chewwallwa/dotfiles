@@ -1,0 +1,10 @@
+[soe][Compressor#0]
+attack=5
+bypass=true
+dry=20
+makeup=10.04
+ratio=3
+release=250
+sidechainInputDevice=alsa_output.usb-SmartlinkTechnology_USB2.0_Device_USB-Audio-00.pro-output-0
+sidechainType=2
+threshold=-19

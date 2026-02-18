@@ -1,0 +1,60 @@
+# --- SEUS ATALHOS ---
+map <Right> navigate next
+map <Left> navigate previous
+map = zoom in
+map - zoom out
+
+# --- CORREÇÃO VISUAL ---
+# O segredo: Fundo da janela cinza escuro, página amarela
+set default-bg "#282828"
+
+# Configuração do Recolor (Página Amarelada)
+set recolor-lightcolor "#F2E5BC"
+set recolor-darkcolor "#181a1b"
+set recolor "true"
+set recolor-keephue "true"
+map i recolor
+set default-fg "#181a1b"
+
+set statusbar-bg "#181a1b"
+set statusbar-fg "#F2E5BC"
+set statusbar-basename true
+
+set inputbar-bg "#F2E5BC"
+set inputbar-fg "#181a1b"
+
+set index-bg "#F2E5BC"
+set index-fg "#181a1b"
+set index-active-bg "#a7c080"
+set index-active-fg "#2b3339"
+
+set completion-bg "#F2E5BC"
+set completion-fg "#181a1b"
+set completion-group-bg "#F2E5BC"
+set completion-group-fg "#7fbbb3"
+set completion-highlight-bg "#a7c080"
+set completion-highlight-fg "#2b3339"
+
+set notification-bg "#F2E5BC"
+set notification-fg "#181a1b"
+set notification-error-bg "#e68183"
+set notification-error-fg "#2b3339"
+set notification-warning-bg "#e68183"
+set notification-warning-fg "#2b3339"
+
+set highlight-color "rgba(212, 185, 118, 0.51)"
+set highlight-active-color "#7fbbb3"
+set highlight-transparency 0.35
+map <A-n> set nohlsearch
+set selection-notification false
+
+set database "sqlite"
+
+set render-loading-bg "#F2E5BC"
+set render-loading-fg "#181a1b"
+
+set window-title-home-tilde true
+
+set selection-clipboard clipboard
+set synctex true
+set synctex-editor-command "nvr --remote-silent +%{line} %{input}"

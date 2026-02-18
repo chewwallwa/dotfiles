@@ -1,0 +1,5 @@
+[soe][Autogain#0]
+maximumHistory=6
+reference=5
+silenceThreshold=-40
+target=-8
