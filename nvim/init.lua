@@ -1,5 +1,5 @@
 -- ==========================================================================
--- 1. PLUGIN INSTALLER (LAZY.NVIM)
+-- 1. INSTALADOR DE PLUGINS (LAZY.NVIM)
 -- ==========================================================================
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -10,7 +10,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 -- ==========================================================================
--- 2. GENERAL EDITOR SETTINGS AND CUSTOM KEYMAPS
+-- 2. CONFIGURAÇÕES GERAIS DO EDITOR E CUSTOM KEYMAPS
 -- ==========================================================================
 vim.g.mapleader = " "
 vim.opt.termguicolors = true
@@ -22,59 +22,82 @@ vim.opt.cursorline = true
 vim.opt.conceallevel = 2 
 vim.opt.statusline = "%f%m\\ %=3l:%-2c\\ %y"
 
--- Enables spell checker and sets the initial language to Portuguese
+-- Ativa o corretor e define o idioma inicial como Português
 vim.opt.spell = true
 vim.opt.spelllang = "pt"
 
--- Shortcut to toggle dictionary (Normal Mode: Space + sl)
+-- Atalho para alternar o dicionário (Modo Normal: Espaço + sl)
 vim.keymap.set("n", "<leader>sl", function()
     if vim.o.spelllang == "pt" then
         vim.opt.spelllang = "en"
-        vim.notify("Dictionary: ENGLISH", vim.log.levels.INFO)
+        vim.notify("Dicionário: INGLÊS", vim.log.levels.INFO)
     else
         vim.opt.spelllang = "pt"
-        vim.notify("Dictionary: PORTUGUESE", vim.log.levels.INFO)
+        vim.notify("Dicionário: PORTUGUÊS", vim.log.levels.INFO)
     end
-end, { desc = "Toggle Dictionary (PT/EN)" })
+end, { desc = "Alternar Dicionário (PT/EN)" })
 
--- >> CUSTOM KEYMAPS <<
+-- >> ATALHOS CUSTOMIZADOS (KEYMAPS) <<
 local map = vim.keymap.set
 
--- Smart Markdown Formatting Function:
--- 1 line ('v' selection): Formats exactly the selected word/text.
--- Multiple lines (or 'V' selection): Formats the beginning and end of each line, ignoring empty ones.
-local function smart_format(marker)
-    return function()
-        local num_lines = math.abs(vim.fn.line("v") - vim.fn.line(".")) + 1
-        local current_mode = vim.fn.mode()
+-- Transformar linhas em Bullet List (Modo Visual - Ignora linhas vazias)
+map("v", "<leader>bl", "<Esc>:'<,'>g/\\S/s/^\\s*\\zs/- /<CR>:noh<CR>", { desc = "Format: Add Bullets", silent = true })
+
+-- Limpar TODAS as linhas em branco da seleção visual (Modo Visual)
+map("v", "<leader>nl", "<Esc>:'<,'>g/^\\s*$/d<CR>:noh<CR>", { desc = "Remove Todas Newlines", silent = true })
+
+-- Correção Instantânea de Typos (Modo Inserção)
+map("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { desc = "Corrige última palavra errada" })
+-- ==========================================================================
+-- TOGGLE BLOCKQUOTE INTELIGENTE (Corrigido)
+-- ==========================================================================
+local function toggle_quote()
+    local mode = vim.fn.mode()
+    
+    if mode == 'v' or mode == 'V' or mode == '\22' then
+        -- Sai do modo visual para registrar as coordenadas '< e '>
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'x', false)
         
-        if num_lines == 1 and current_mode == "v" then
-            -- Exact surgical replacement of the selected text
-            return "c" .. marker .. "<C-r>\"" .. marker .. "<ESC>"
-        else
-            -- Smart line-by-line RegEx (ignores empty lines and spaces)
-            return "<Esc>:'<,'>g/\\S/s/^\\s*\\zs.\\{-}\\ze\\s*$/" .. marker .. "&" .. marker .. "/<CR>:noh<CR>"
+        -- Aguarda o Neovim processar a saída do modo visual
+        vim.schedule(function()
+            local r1 = vim.fn.line("'<")
+            local r2 = vim.fn.line("'>")
+            
+            -- Previne erro se a seleção for feita de baixo para cima
+            if r1 > r2 then r1, r2 = r2, r1 end 
+            
+            for i = r1, r2 do
+                local line = vim.fn.getline(i)
+                if line:match("%S") then
+                    if line:match("^%s*>%s?") then
+                        -- Isola a string para não vazar o segundo retorno do gsub
+                        local nova_linha = line:gsub("^%s*>%s?", "")
+                        vim.fn.setline(i, nova_linha)
+                    else
+                        vim.fn.setline(i, "> " .. line)
+                    end
+                end
+            end
+        end)
+    else
+        -- Modo normal: processa apenas a linha atual
+        local r1 = vim.fn.line(".")
+        local line = vim.fn.getline(r1)
+        
+        if line:match("%S") then
+            if line:match("^%s*>%s?") then
+                local nova_linha = line:gsub("^%s*>%s?", "")
+                vim.fn.setline(r1, nova_linha)
+            else
+                vim.fn.setline(r1, "> " .. line)
+            end
         end
     end
 end
 
--- Mappings using the Smart Function
-map("v", "<leader>b", smart_format("**"), { expr = true, desc = "Format: Bold" })
-map("v", "<leader>i", smart_format("*"), { expr = true, desc = "Format: Italic" })
-map("v", "<leader>x", smart_format("***"), { expr = true, desc = "Format: Bold + Italic" })
-map("v", "<leader>s", smart_format("~~"), { expr = true, desc = "Format: Strikethrough" })
-
--- Transform lines into Bullet List (Visual Mode - Ignores empty lines)
-map("v", "<leader>bl", "<Esc>:'<,'>g/\\S/s/^\\s*\\zs/- /<CR>:noh<CR>", { desc = "Format: Add Bullets", silent = true })
-
--- Clear ALL empty lines from visual selection (Visual Mode)
-map("v", "<leader>nl", "<Esc>:'<,'>g/^\\s*$/d<CR>:noh<CR>", { desc = "Remove All Newlines", silent = true })
-
--- Instant Typo Correction (Insert Mode)
-map("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { desc = "Correct last misspelled word" })
-
+vim.keymap.set({"n", "v"}, "<leader>q", toggle_quote, { desc = "Toggle Blockquote" })
 -- ==========================================================================
--- 3. VIMTEX AND ULTISNIPS CONFIGURATION
+-- 3. CONFIGURAÇÃO DO VIMTEX E ULTISNIPS
 -- ==========================================================================
 vim.g.vimtex_view_method = 'general'
 vim.g.vimtex_view_general_viewer = 'zathura'
@@ -100,19 +123,27 @@ vim.g.UltiSnipsJumpForwardTrigger = '<tab>'
 vim.g.UltiSnipsJumpBackwardTrigger = '<s-tab>'
 vim.g.UltiSnipsSnippetDirectories = { "UltiSnips" }
 
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "markdown",
+    callback = function()
+        -- foldlevel = 2 -- fecha tudo (H1, H2, etc). 
+        -- Se quisesse deixar o H1 aberto e fechar do H2 em diante, usaria 1.
+        vim.opt_local.foldlevel = 0
+    end
+})
 -- ==========================================================================
--- 4. PLUGIN LIST (LAZY)
+-- 4. LISTA DE PLUGINS (LAZY)
 -- ==========================================================================
 require("lazy").setup({
 
-  -- >> KEYMAP CHEATSHEET (FLOATING WINDOW)
+  -- >> CHEATSHEET DE ATALHOS (JANELA FLUTUANTE)
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
     opts = { delay = 500 },
   },
 
-  -- >> AUTOCOMPLETE AND WORD CORRECTION (NEW SETUP)
+  -- >> AUTOCOMPLETAR E CORREÇÃO DE PALAVRAS
   {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
@@ -120,31 +151,21 @@ require("lazy").setup({
       "hrsh7th/cmp-buffer", 
       "hrsh7th/cmp-path",   
       "quangnguyen30192/cmp-nvim-ultisnips", 
-      "f3fora/cmp-spell", -- New plugin: suggests spelling corrections in autocomplete
+      "f3fora/cmp-spell", 
     },
     config = function()
       local cmp = require("cmp")
       cmp.setup({
-        snippet = {
-          expand = function(args)
-            vim.fn["UltiSnips#Anon"](args.body)
-          end,
-        },
+        snippet = { expand = function(args) vim.fn["UltiSnips#Anon"](args.body) end },
         mapping = cmp.mapping.preset.insert({
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
           ['<C-Space>'] = cmp.mapping.complete(),
-          
-          -- Quickly cancels/closes the suggestions menu
           ['<C-c>'] = cmp.mapping.abort(), 
-          
-          -- Only completes the word if you selected one (prevents accidental completion on Enter)
           ['<CR>'] = cmp.mapping.confirm({ select = false }), 
         }),
         sources = cmp.config.sources({
-          -- Limits to only 4 spelling correction suggestions
           { name = 'spell', max_item_count = 4 }, 
-          -- Keeps your snippets and buffer text as backup
           { name = 'ultisnips', max_item_count = 2 },
           { name = 'buffer', max_item_count = 2 },
         })
@@ -152,7 +173,7 @@ require("lazy").setup({
     end
   },
 
-  -- >> THEME: GRUVBOX MATERIAL
+  -- >> TEMA: GRUVBOX MATERIAL
   { 
     "sainnhe/gruvbox-material", 
     lazy = false, 
@@ -197,12 +218,11 @@ require("lazy").setup({
                 hl(0, "RenderMarkdownInlineHighlight", { fg = "#282828", bg = "#d79921" })
             end
         })
-
         vim.cmd("colorscheme gruvbox-material")
     end
   },
   
-  -- >> LATEX AND SNIPPETS
+  -- >> LATEX E SNIPPETS
   { "lervag/vimtex", ft = "tex" },
   { "sirver/ultisnips" },
   { "honza/vim-snippets" },
@@ -221,6 +241,23 @@ require("lazy").setup({
     end
   },
 
+  -- >> FORMATAÇÃO INTELIGENTE DE MARKDOWN (Substitui o script gigante)
+  {
+    "tadmccorkle/markdown.nvim",
+    ft = "markdown",
+    opts = {}, -- Carrega o plugin com inteligência Treesitter
+    config = function(_, opts)
+        require("markdown").setup(opts)
+        local wk_map = vim.keymap.set
+        
+        -- Mapeia seus atalhos antigos para o motor inteligente do plugin (remap = true)
+        wk_map({"n", "v"}, "<leader>b", "gsb", { remap = true, desc = "Format: Bold" })
+        wk_map({"n", "v"}, "<leader>i", "gsi", { remap = true, desc = "Format: Italic" })
+        wk_map({"n", "v"}, "<leader>s", "gss", { remap = true, desc = "Format: Strikethrough" })
+        wk_map({"n", "v"}, "<leader>c", "gsc", { remap = true, desc = "Format: Inline Code" })
+    end
+  },
+
   -- >> MARKDOWN RENDERER
   {
     "MeanderingProgrammer/render-markdown.nvim",
@@ -229,29 +266,23 @@ require("lazy").setup({
     config = function()
         require('render-markdown').setup({
             on = { attach = function() return true end },
+            render_modes = { 'n', 'i', 'c' },
             heading = {
-                enabled = true,
-                sign = false,
-                left_pad = 0,
+                enabled = true, sign = false, left_pad = 0,
                 icons = { "㊀ ", "㊁ ", "㊂ ", "㊃ ", "㊄ ", "㊅ " },
                 position = 'overlay', 
                 backgrounds = { "MeuH1", "MeuH2", "MeuH3", "MeuH4", "MeuH5", "MeuH6" },
                 width = "full", 
             },
-            highlights = {
-                highlight = { bg = "RenderMarkdownInlineHighlight", fg = "RenderMarkdownInlineHighlight" },
-            },
-            code = {
-                sign = false,
-                width = "block",
-                right_pad = 1,
-            },
-            anti_conceal = { enabled = false }, 
+            highlights = { highlight = { bg = "RenderMarkdownInlineHighlight", fg = "RenderMarkdownInlineHighlight" } },
+            pipe_table = { enabled = true, preset = 'round', style = 'full', cell = 'padded' },
+            code = { sign = false, width = "block", right_pad = 1 },
+            anti_conceal = { enabled = true }, 
         })
     end
   },
 
-  -- >> OTHER PLUGINS (FOLDING, OUTLINE, BULLETS, FORMATTER)
+  -- >> OUTROS PLUGINS (FOLDING, OUTLINE, BULLETS, FORMATTER)
   {
     "kevinhwang91/nvim-ufo",
     dependencies = { "kevinhwang91/promise-async" },
@@ -261,11 +292,7 @@ require("lazy").setup({
       vim.o.foldlevel = 99
       vim.o.foldenable = true
       local status, ufo = pcall(require, "ufo")
-      if status then
-          ufo.setup({
-            provider_selector = function() return {'treesitter', 'indent'} end
-          })
-      end
+      if status then ufo.setup({ provider_selector = function() return {'treesitter', 'indent'} end }) end
     end
   },
 
